@@ -1,0 +1,24 @@
+{
+    "cSpell.words": [
+        "RUSTFLAGS",
+        "bitcode",
+        "concat",
+        "dealloc",
+        "deps",
+        "ebpf",
+        "epoll",
+        "fpbpf",
+        "kprobe",
+        "kretprobe",
+        "libbpf",
+        "llvm",
+        "nostartfiles",
+        "repr",
+        "ringbuf",
+        "rustc",
+        "syscalls",
+        "tracepoint",
+        "typenum",
+        "unlinkat"
+    ]
+}

@@ -1,0 +1,26 @@
+[package]
+name = "example-kprobe"
+version = "0.1.0"
+authors = ["Vladislav Melnik <vladislav.melnik@protonmail.com>"]
+edition = "2018"
+license = "MIT"
+repository = "https://github.com/vlad9486/ebpf-tools"
+
+[[bin]]
+name = "example-kern"
+path = "src/main.rs"
+required-features = ["kern"]
+
+[[bin]]
+name = "example-user"
+path = "src/main.rs"
+required-features = ["user"]
+
+[dependencies]
+ebpf-kern = { path = "../ebpf-kern", optional = true }
+ebpf-user = { path = "../ebpf-user", optional = true }
+
+[features]
+default = ["user"]
+kern = ["ebpf-kern/macros"]
+user = ["ebpf-user/macros"]

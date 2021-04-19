@@ -1,0 +1,8 @@
+[workspace]
+members = [
+    "ebpf-kern",
+    "ebpf-kern/macros",
+    "ebpf-user",
+    "ebpf-user/macros",
+    "example-kprobe",
+]
