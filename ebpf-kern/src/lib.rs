@@ -6,7 +6,7 @@ pub use ebpf_kern_macros::*;
 
 pub use cty;
 
-mod helpers;
+pub mod helpers;
 
 mod ctx;
 pub use self::ctx::Context;

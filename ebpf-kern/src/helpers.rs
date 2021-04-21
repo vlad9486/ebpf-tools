@@ -1,6 +1,23 @@
 use core::mem;
 
 #[inline(always)]
+pub unsafe fn get_current_pid_tgid() -> cty::uint64_t {
+    let f: unsafe extern "C" fn() -> cty::uint64_t = mem::transmute(14usize);
+
+    f()
+}
+
+#[inline(always)]
+pub unsafe fn get_current_comm(buf: *mut cty::c_void, size_of_buf: cty::uint32_t) -> cty::c_long {
+    let f: unsafe extern "C" fn(
+        *mut cty::c_void,
+        cty::uint32_t,
+    ) -> cty::c_long = mem::transmute(16usize);
+
+    f(buf, size_of_buf)
+}
+
+#[inline(always)]
 pub unsafe fn probe_read_kernel(
     dst: *mut cty::c_void,
     size: cty::uint32_t,

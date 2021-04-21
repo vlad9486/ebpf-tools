@@ -17,6 +17,7 @@
         "ringbuf",
         "rustc",
         "syscalls",
+        "tgid",
         "tracepoint",
         "typenum",
         "unlinkat"
