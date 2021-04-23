@@ -1,7 +1,7 @@
 extern crate proc_macro;
 
 use proc_macro2::Literal;
-use syn::{Data, DeriveInput, Lit, parse_macro_input, Attribute, Ident, Error};
+use syn::{Data, DeriveInput, Lit, parse_macro_input, Attribute, Ident, Error, Type, PathArguments};
 
 #[proc_macro]
 pub fn license(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
@@ -33,7 +33,7 @@ pub fn license(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     })
 }
 
-#[proc_macro_derive(BpfApp, attributes(license, ringbuf, prog))]
+#[proc_macro_derive(BpfApp, attributes(license, hashmap, ringbuf, prog))]
 pub fn derive_bpf_app(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let DeriveInput { data, .. } = parse_macro_input!(input as DeriveInput);
 
@@ -50,6 +50,7 @@ pub fn derive_bpf_app(input: proc_macro::TokenStream) -> proc_macro::TokenStream
     fn process_attrib(
         attrs: &[Attribute],
         name_ident: &Ident,
+        ty: &Type,
     ) -> Option<KernelTokens<impl quote::ToTokens>> {
         struct AttributeRingbuf {
             size: usize,
@@ -89,6 +90,44 @@ pub fn derive_bpf_app(input: proc_macro::TokenStream) -> proc_macro::TokenStream
                     },
                 })
             },
+            "hashmap" => {
+                let AttributeRingbuf { size } = attribute.parse_args().ok()?;
+
+                // TODO: error message
+                let (key_size, value_size) = match ty {
+                    &Type::Path(ref path) => {
+                        match &path.path.segments.last().unwrap().arguments {
+                            &PathArguments::AngleBracketed(ref args) => {
+                                let mut a = args.args.iter();
+                                let key_size = match a.next().unwrap() {
+                                    syn::GenericArgument::Const(e) => e,
+                                    _ => panic!(),
+                                };
+                                let value_size = match a.next().unwrap() {
+                                    syn::GenericArgument::Const(e) => e,
+                                    _ => panic!(),
+                                };
+                                (key_size, value_size)
+                            },
+                            _ => panic!(),
+                        }
+                    },
+                    _ => panic!(),
+                };
+
+                Some(KernelTokens {
+                    decl: quote::quote! {
+                        #[no_mangle]
+                        #[link_section = ".maps"]
+                        #[allow(non_upper_case_globals)]
+                        static mut #name_ident: ebpf_kern::HashMap<#key_size, #value_size, #size> =
+                            ebpf_kern::HashMap::new();
+                    },
+                    new_field: quote::quote! {
+                        #name_ident: ebpf_kern::HashMapRef::new(&mut #name_ident),
+                    },
+                })
+            },
             "prog" => {
                 if let Lit::Str(l) = attribute.parse_args().ok()? {
                     Some(KernelTokens {
@@ -121,8 +160,9 @@ pub fn derive_bpf_app(input: proc_macro::TokenStream) -> proc_macro::TokenStream
     let kt = match data {
         Data::Struct(data) => data.fields.into_iter().fold(kt, |kt, field| {
             let val = field.ident.unwrap();
+            let ty = field.ty;
 
-            match process_attrib(&field.attrs, &val) {
+            match process_attrib(&field.attrs, &val, &ty) {
                 None => kt,
                 Some(KernelTokens { decl, new_field }) => {
                     let KernelTokens {

@@ -1,6 +1,6 @@
 [package]
 name = "ebpf-kern"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Vladislav Melnik <vladislav.melnik@protonmail.com>"]
 edition = "2018"
 license = "MIT"
@@ -9,7 +9,7 @@ repository = "https://github.com/vlad9486/ebpf-tools"
 
 [dependencies]
 cty = "0.2"
-ebpf-kern-macros = { version = "0.1.0", path = "macros", optional = true }
+ebpf-kern-macros = { version = "0.1.2", path = "macros", optional = true }
 
 [features]
 macros = ["ebpf-kern-macros"]

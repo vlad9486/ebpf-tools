@@ -31,6 +31,13 @@ impl AsMut<[u8]> for RingBufferData {
     }
 }
 
+impl AsRef<[u8]> for RingBufferData {
+    #[inline(always)]
+    fn as_ref(&self) -> &[u8] {
+        &self.inner
+    }
+}
+
 impl RingBufferRef {
     pub fn new<const MAX_ENTRIES: usize>(inner: &mut RingBuffer<MAX_ENTRIES>) -> Self {
         RingBufferRef {

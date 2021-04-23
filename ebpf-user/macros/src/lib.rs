@@ -1,6 +1,6 @@
 use syn::{Data, DeriveInput, parse_macro_input};
 
-#[proc_macro_derive(BpfApp, attributes(license, ringbuf, prog))]
+#[proc_macro_derive(BpfApp, attributes(license, hashmap, ringbuf, prog))]
 pub fn derive_bpf_app(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let DeriveInput { ident, data, .. } = parse_macro_input!(input as DeriveInput);
 
@@ -35,7 +35,7 @@ pub fn derive_bpf_app(input: proc_macro::TokenStream) -> proc_macro::TokenStream
             UserTokens {
                 map_cnt: quote::quote! { #map_cnt + <#ty as ebpf_user::kind::AppItem>::MAP },
                 prog_cnt: quote::quote! { #prog_cnt + <#ty as ebpf_user::kind::AppItem>::PROG },
-                new_field: quote::quote! { #new_field #val: #ty::named(#val_str), },
+                new_field: quote::quote! { #new_field #val: <#ty>::named(#val_str), },
                 map_step: quote::quote! {
                     #map_step
                     if let ebpf_user::kind::AppItemKindMut::Map(v) = self.#val.kind_mut() {
