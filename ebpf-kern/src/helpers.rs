@@ -51,6 +51,23 @@ pub unsafe fn get_current_comm(buf: *mut cty::c_void, size_of_buf: cty::uint32_t
 }
 
 #[inline(always)]
+pub unsafe fn get_stack(
+    ctx: *mut cty::c_void,
+    buf: *mut cty::c_void,
+    size: cty::uint32_t,
+    flags: cty::uint64_t,
+) -> cty::c_long {
+    let f: unsafe extern "C" fn(
+        *mut cty::c_void,
+        *mut cty::c_void,
+        cty::uint32_t,
+        cty::uint64_t,
+    ) -> cty::c_long = mem::transmute(67usize);
+
+    f(ctx, buf, size, flags)
+}
+
+#[inline(always)]
 pub unsafe fn probe_read_kernel(
     dst: *mut cty::c_void,
     size: cty::uint32_t,

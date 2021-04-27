@@ -43,4 +43,16 @@ impl Context {
             value.assume_init()
         }
     }
+
+    #[inline(always)]
+    pub fn get_user_stack(&self, buf: &[u8]) -> Result<usize, i32> {
+        let c = unsafe {
+            helpers::get_stack(self.inner as _, buf.as_ptr() as _, buf.len() as _, 256)
+        };
+        if c < 0 {
+            Err(c as _)
+        } else {
+            Ok(c as _)
+        }
+    }
 }
