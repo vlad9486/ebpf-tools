@@ -1,7 +1,9 @@
 extern crate proc_macro;
 
 use proc_macro2::Literal;
-use syn::{Data, DeriveInput, Lit, parse_macro_input, Attribute, Ident, Error, Type, PathArguments, Expr};
+use syn::{
+    Data, DeriveInput, Lit, parse_macro_input, Attribute, Ident, Error, Type, PathArguments, Expr,
+};
 
 #[proc_macro]
 pub fn license(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
@@ -53,12 +55,10 @@ pub fn derive_bpf_app(input: proc_macro::TokenStream) -> proc_macro::TokenStream
                 let e = Error::new_spanned(path, "not enough path segments");
                 match &path.path.segments.last().ok_or(e)?.arguments {
                     &PathArguments::AngleBracketed(ref args) => {
-                        let it = args.args
-                            .iter()
-                            .filter_map(|arg| match arg {
-                                syn::GenericArgument::Const(e) => Some(e),
-                                _ => None,
-                            });
+                        let it = args.args.iter().filter_map(|arg| match arg {
+                            syn::GenericArgument::Const(e) => Some(e),
+                            _ => None,
+                        });
                         Ok(it)
                     },
                     a => {
@@ -68,7 +68,10 @@ pub fn derive_bpf_app(input: proc_macro::TokenStream) -> proc_macro::TokenStream
                     },
                 }
             },
-            ty => Err(Error::new_spanned(ty, "expected path like `std::slice::Iter`")),
+            ty => Err(Error::new_spanned(
+                ty,
+                "expected path like `std::slice::Iter`",
+            )),
         }
     }
 
@@ -96,8 +99,11 @@ pub fn derive_bpf_app(input: proc_macro::TokenStream) -> proc_macro::TokenStream
         }
 
         let attribute = attrs.first().unwrap();
-        let segment = attribute.path.segments.first()
-            .ok_or(Error::new_spanned(attribute, "expected one path component"))?;
+        let segment = attribute
+            .path
+            .segments
+            .first()
+            .ok_or_else(|| Error::new_spanned(attribute, "expected one path component"))?;
         let ident_str = segment.ident.to_string();
         match ident_str.as_str() {
             "ringbuf" => {
@@ -177,16 +183,18 @@ pub fn derive_bpf_app(input: proc_macro::TokenStream) -> proc_macro::TokenStream
                         },
                     })
                 } else {
-                    Err(Error::new_spanned(&attribute.tokens, "expected string literal"))
+                    Err(Error::new_spanned(
+                        &attribute.tokens,
+                        "expected string literal",
+                    ))
                 }
             },
             _ => Err(Error::new(segment.ident.span(), "unknown attribute")),
         }
     }
 
-    let kt = match data {
-        Data::Struct(data) => data.fields.into_iter()
-            .try_fold::<_, _, Result<_, Error>>(kt, |kt, field| {
+    let kt: Result<_, Error> = match data {
+        Data::Struct(data) => data.fields.into_iter().try_fold(kt, |kt, field| {
             let val = field.ident.unwrap();
             let ty = field.ty;
 

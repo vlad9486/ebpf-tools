@@ -8,14 +8,12 @@ pub struct Context {
 impl Context {
     #[inline(always)]
     pub unsafe fn cast(ctx: *const cty::c_void) -> Self {
-        Context {
-            inner: ctx,
-        }
+        Context { inner: ctx }
     }
 
     #[inline(always)]
     pub fn read_here<T>(&self, offset: usize) -> T {
-        unsafe { (self.inner.offset(offset as isize) as *const T).read() }
+        unsafe { (self.inner.add(offset) as *const T).read() }
     }
 
     #[inline(always)]
@@ -24,7 +22,7 @@ impl Context {
             helpers::probe_read_kernel(
                 slice.as_mut_ptr() as _,
                 slice.len() as u32,
-                self.inner.offset(offset as isize) as *const _,
+                self.inner.add(offset) as *const _,
             );
         }
     }
@@ -38,7 +36,7 @@ impl Context {
             helpers::probe_read_kernel(
                 value.as_mut_ptr() as _,
                 mem::size_of::<T>() as u32,
-                self.inner.offset(offset as isize) as *const _,
+                self.inner.add(offset) as *const _,
             );
             value.assume_init()
         }
@@ -46,9 +44,8 @@ impl Context {
 
     #[inline(always)]
     pub fn get_user_stack(&self, buf: &[u8]) -> Result<usize, i32> {
-        let c = unsafe {
-            helpers::get_stack(self.inner as _, buf.as_ptr() as _, buf.len() as _, 256)
-        };
+        let c =
+            unsafe { helpers::get_stack(self.inner as _, buf.as_ptr() as _, buf.len() as _, 256) };
         if c < 0 {
             Err(c as _)
         } else {

@@ -42,10 +42,8 @@ pub unsafe fn get_current_pid_tgid() -> cty::uint64_t {
 
 #[inline(always)]
 pub unsafe fn get_current_comm(buf: *mut cty::c_void, size_of_buf: cty::uint32_t) -> cty::c_long {
-    let f: unsafe extern "C" fn(
-        *mut cty::c_void,
-        cty::uint32_t,
-    ) -> cty::c_long = mem::transmute(16usize);
+    let f: unsafe extern "C" fn(*mut cty::c_void, cty::uint32_t) -> cty::c_long =
+        mem::transmute(16usize);
 
     f(buf, size_of_buf)
 }
