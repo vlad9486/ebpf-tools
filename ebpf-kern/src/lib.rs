@@ -12,7 +12,7 @@ mod ctx;
 pub use self::ctx::Context;
 
 mod map;
-pub use self::map::{HashMap, HashMapRef};
+pub use self::map::{ArrayPerCpu, ArrayPerCpuRef, HashMap, HashMapRef};
 
 mod ring_buffer;
 pub use self::ring_buffer::{RingBuffer, RingBufferRef, RingBufferData};

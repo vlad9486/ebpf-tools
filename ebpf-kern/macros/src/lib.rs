@@ -1,7 +1,7 @@
 extern crate proc_macro;
 
 use proc_macro2::Literal;
-use syn::{Data, DeriveInput, Lit, parse_macro_input, Attribute, Ident, Error, Type, PathArguments};
+use syn::{Data, DeriveInput, Lit, parse_macro_input, Attribute, Ident, Error, Type, PathArguments, Expr};
 
 #[proc_macro]
 pub fn license(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
@@ -33,7 +33,7 @@ pub fn license(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     })
 }
 
-#[proc_macro_derive(BpfApp, attributes(license, hashmap, ringbuf, prog))]
+#[proc_macro_derive(BpfApp, attributes(license, hashmap, array_percpu, ringbuf, prog))]
 pub fn derive_bpf_app(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let DeriveInput { data, .. } = parse_macro_input!(input as DeriveInput);
 
@@ -47,11 +47,36 @@ pub fn derive_bpf_app(input: proc_macro::TokenStream) -> proc_macro::TokenStream
         new_field: quote::quote! {},
     };
 
+    fn generic_const(ty: &Type) -> Result<impl Iterator<Item = &'_ Expr> + '_, Error> {
+        match ty {
+            &Type::Path(ref path) => {
+                let e = Error::new_spanned(path, "not enough path segments");
+                match &path.path.segments.last().ok_or(e)?.arguments {
+                    &PathArguments::AngleBracketed(ref args) => {
+                        let it = args.args
+                            .iter()
+                            .filter_map(|arg| match arg {
+                                syn::GenericArgument::Const(e) => Some(e),
+                                _ => None,
+                            });
+                        Ok(it)
+                    },
+                    a => {
+                        let msg = "expected angle bracketed argument \
+                            like `<'a, T>` in `std::slice::iter<'a, T>`";
+                        Err(Error::new_spanned(a, msg))
+                    },
+                }
+            },
+            ty => Err(Error::new_spanned(ty, "expected path like `std::slice::Iter`")),
+        }
+    }
+
     fn process_attrib(
         attrs: &[Attribute],
         name_ident: &Ident,
         ty: &Type,
-    ) -> Option<KernelTokens<impl quote::ToTokens>> {
+    ) -> Result<KernelTokens<impl quote::ToTokens>, Error> {
         struct AttributeRingbuf {
             size: usize,
         }
@@ -70,14 +95,15 @@ pub fn derive_bpf_app(input: proc_macro::TokenStream) -> proc_macro::TokenStream
             }
         }
 
-        let attribute = attrs.first()?;
-        let segment = attribute.path.segments.first()?;
+        let attribute = attrs.first().unwrap();
+        let segment = attribute.path.segments.first()
+            .ok_or(Error::new_spanned(attribute, "expected one path component"))?;
         let ident_str = segment.ident.to_string();
         match ident_str.as_str() {
             "ringbuf" => {
-                let AttributeRingbuf { size } = attribute.parse_args().ok()?;
+                let AttributeRingbuf { size } = attribute.parse_args()?;
 
-                Some(KernelTokens {
+                Ok(KernelTokens {
                     decl: quote::quote! {
                         #[no_mangle]
                         #[link_section = ".maps"]
@@ -90,32 +116,33 @@ pub fn derive_bpf_app(input: proc_macro::TokenStream) -> proc_macro::TokenStream
                     },
                 })
             },
-            "hashmap" => {
-                let AttributeRingbuf { size } = attribute.parse_args().ok()?;
+            "array_percpu" => {
+                let AttributeRingbuf { size } = attribute.parse_args()?;
+                let mut it = generic_const(ty)?;
+                let e = || Error::new_spanned(ty, "expected one generic constant arguments");
+                let value_size = it.next().ok_or_else(e)?;
 
-                // TODO: error message
-                let (key_size, value_size) = match ty {
-                    &Type::Path(ref path) => {
-                        match &path.path.segments.last().unwrap().arguments {
-                            &PathArguments::AngleBracketed(ref args) => {
-                                let mut a = args.args.iter();
-                                let key_size = match a.next().unwrap() {
-                                    syn::GenericArgument::Const(e) => e,
-                                    _ => panic!(),
-                                };
-                                let value_size = match a.next().unwrap() {
-                                    syn::GenericArgument::Const(e) => e,
-                                    _ => panic!(),
-                                };
-                                (key_size, value_size)
-                            },
-                            _ => panic!(),
-                        }
+                Ok(KernelTokens {
+                    decl: quote::quote! {
+                        #[no_mangle]
+                        #[link_section = ".maps"]
+                        #[allow(non_upper_case_globals)]
+                        static mut #name_ident: ebpf_kern::ArrayPerCpu<#value_size, #size> =
+                            ebpf_kern::ArrayPerCpu::new();
                     },
-                    _ => panic!(),
-                };
+                    new_field: quote::quote! {
+                        #name_ident: ebpf_kern::ArrayPerCpuRef::new(&mut #name_ident),
+                    },
+                })
+            },
+            "hashmap" => {
+                let AttributeRingbuf { size } = attribute.parse_args()?;
+                let mut it = generic_const(ty)?;
+                let e = || Error::new_spanned(ty, "expected two generic constant arguments");
+                let key_size = it.next().ok_or_else(e)?;
+                let value_size = it.next().ok_or_else(e)?;
 
-                Some(KernelTokens {
+                Ok(KernelTokens {
                     decl: quote::quote! {
                         #[no_mangle]
                         #[link_section = ".maps"]
@@ -129,8 +156,8 @@ pub fn derive_bpf_app(input: proc_macro::TokenStream) -> proc_macro::TokenStream
                 })
             },
             "prog" => {
-                if let Lit::Str(l) = attribute.parse_args().ok()? {
-                    Some(KernelTokens {
+                if let Lit::Str(l) = attribute.parse_args()? {
+                    Ok(KernelTokens {
                         decl: quote::quote! {
                             #[no_mangle]
                             #[link_section = #l]
@@ -150,37 +177,39 @@ pub fn derive_bpf_app(input: proc_macro::TokenStream) -> proc_macro::TokenStream
                         },
                     })
                 } else {
-                    None
+                    Err(Error::new_spanned(&attribute.tokens, "expected string literal"))
                 }
             },
-            _ => None,
+            _ => Err(Error::new(segment.ident.span(), "unknown attribute")),
         }
     }
 
     let kt = match data {
-        Data::Struct(data) => data.fields.into_iter().fold(kt, |kt, field| {
+        Data::Struct(data) => data.fields.into_iter()
+            .try_fold::<_, _, Result<_, Error>>(kt, |kt, field| {
             let val = field.ident.unwrap();
             let ty = field.ty;
 
-            match process_attrib(&field.attrs, &val, &ty) {
-                None => kt,
-                Some(KernelTokens { decl, new_field }) => {
-                    let KernelTokens {
-                        decl: decl_a,
-                        new_field: new_field_a,
-                    } = kt;
-                    KernelTokens {
-                        decl: quote::quote! {
-                            #decl_a #decl
-                        },
-                        new_field: quote::quote! {
-                            #new_field_a #new_field
-                        },
-                    }
+            let KernelTokens { decl, new_field } = process_attrib(&field.attrs, &val, &ty)?;
+            let KernelTokens {
+                decl: decl_a,
+                new_field: new_field_a,
+            } = kt;
+            Ok(KernelTokens {
+                decl: quote::quote! {
+                    #decl_a #decl
                 },
-            }
+                new_field: quote::quote! {
+                    #new_field_a #new_field
+                },
+            })
         }),
         _ => unimplemented!(),
+    };
+
+    let kt = match kt {
+        Ok(kt) => kt,
+        Err(e) => return e.to_compile_error().into(),
     };
 
     let KernelTokens { decl, new_field } = kt;

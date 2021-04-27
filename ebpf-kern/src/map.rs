@@ -2,6 +2,69 @@ use core::ptr;
 use super::helpers;
 
 #[allow(dead_code)]
+pub struct ArrayPerCpu<const VALUE_SIZE: usize, const MAX_ENTRIES: usize> {
+    ty__: *mut [u32; 6],
+    key_size: *mut [u32; 4],
+    value_size: *mut [u32; VALUE_SIZE],
+    max_entries: *mut [u32; MAX_ENTRIES],
+}
+
+impl<const V: usize, const M: usize> ArrayPerCpu<V, M> {
+    pub const fn new() -> Self {
+        ArrayPerCpu {
+            ty__: ptr::null_mut(),
+            key_size: ptr::null_mut(),
+            value_size: ptr::null_mut(),
+            max_entries: ptr::null_mut(),
+        }
+    }
+}
+
+pub struct ArrayPerCpuRef<const V: usize> {
+    inner: usize,
+}
+
+impl<const V: usize> ArrayPerCpuRef<V> {
+    #[inline(always)]
+    pub fn new<const M: usize>(inner: &mut ArrayPerCpu<V, M>) -> Self {
+        ArrayPerCpuRef {
+            inner: inner as *mut _ as usize,
+        }
+    }
+
+    #[inline(always)]
+    fn inner(&self) -> *mut cty::c_void {
+        self.inner as *mut _
+    }
+
+    #[inline(always)]
+    pub fn get(&self, index: u32) -> Option<&[u8; V]> {
+        let key = index.to_ne_bytes();
+        unsafe {
+            let v = helpers::map_lookup_elem(self.inner(), key.as_ptr() as _);
+            if v.is_null() {
+                None
+            } else {
+                Some(&*(v as *const [u8; V]))
+            }
+        }
+    }
+
+    #[inline(always)]
+    pub fn get_mut(&mut self, index: u32) -> Option<&mut [u8; V]> {
+        let key = index.to_ne_bytes();
+        unsafe {
+            let v = helpers::map_lookup_elem(self.inner(), key.as_ptr() as _);
+            if v.is_null() {
+                None
+            } else {
+                Some(&mut *(v as *mut [u8; V]))
+            }
+        }
+    }
+}
+
+#[allow(dead_code)]
 pub struct HashMap<const KEY_SIZE: usize, const VALUE_SIZE: usize, const MAX_ENTRIES: usize> {
     ty__: *mut [u32; 1],
     key_size: *mut [u32; KEY_SIZE],

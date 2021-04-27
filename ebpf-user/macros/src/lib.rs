@@ -1,6 +1,6 @@
 use syn::{Data, DeriveInput, parse_macro_input};
 
-#[proc_macro_derive(BpfApp, attributes(license, hashmap, ringbuf, prog))]
+#[proc_macro_derive(BpfApp, attributes(license, hashmap, array_percpu, ringbuf, prog))]
 pub fn derive_bpf_app(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let DeriveInput { ident, data, .. } = parse_macro_input!(input as DeriveInput);
 
