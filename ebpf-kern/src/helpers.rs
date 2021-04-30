@@ -81,6 +81,36 @@ pub unsafe fn probe_read_kernel(
 }
 
 #[inline(always)]
+pub unsafe fn probe_read_user_str(
+    dst: *mut cty::c_void,
+    size: cty::uint32_t,
+    unsafe_ptr: *const cty::c_void,
+) -> cty::c_long {
+    let f: unsafe extern "C" fn(
+        *mut cty::c_void,
+        cty::uint32_t,
+        *const cty::c_void,
+    ) -> cty::c_long = mem::transmute(114usize);
+
+    f(dst, size, unsafe_ptr)
+}
+
+#[inline(always)]
+pub unsafe fn probe_read_kernel_str(
+    dst: *mut cty::c_void,
+    size: cty::uint32_t,
+    unsafe_ptr: *const cty::c_void,
+) -> cty::c_long {
+    let f: unsafe extern "C" fn(
+        *mut cty::c_void,
+        cty::uint32_t,
+        *const cty::c_void,
+    ) -> cty::c_long = mem::transmute(115usize);
+
+    f(dst, size, unsafe_ptr)
+}
+
+#[inline(always)]
 pub unsafe fn ringbuf_output(
     ringbuf: *mut cty::c_void,
     data: *mut cty::c_void,
