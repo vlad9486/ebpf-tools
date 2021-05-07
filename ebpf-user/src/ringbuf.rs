@@ -54,12 +54,18 @@ impl RingBufferRegistry {
     where
         F: for<'r> FnMut(&'r [u8]) + 'static,
     {
+        self.add_fd(rb.0.fd(), cb)
+    }
+
+    pub fn add_fd<F>(&mut self, map_fd: i32, cb: F) -> Result<(), i32>
+    where
+        F: for<'r> FnMut(&'r [u8]) + 'static,
+    {
         use std::ptr;
 
         let cb: Box<dyn FnMut(&[u8]) + 'static> = Box::new(cb);
         self.callbacks.push(cb);
         let ctx = self.callbacks.last_mut().unwrap() as *mut _;
-        let map_fd = rb.0.fd();
         if self.inner.is_null() {
             self.inner = unsafe {
                 libbpf_sys::ring_buffer__new(map_fd, Some(Self::cb), ctx as _, ptr::null_mut())
