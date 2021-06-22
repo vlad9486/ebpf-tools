@@ -27,14 +27,14 @@ pub struct RingBufferData {
 impl AsMut<[u8]> for RingBufferData {
     #[inline(always)]
     fn as_mut(&mut self) -> &mut [u8] {
-        &mut self.inner
+        self.inner
     }
 }
 
 impl AsRef<[u8]> for RingBufferData {
     #[inline(always)]
     fn as_ref(&self) -> &[u8] {
-        &self.inner
+        self.inner
     }
 }
 
@@ -64,14 +64,17 @@ impl RingBufferRef {
 
     #[inline(always)]
     pub fn reserve(&mut self, size: usize) -> Result<RingBufferData, cty::c_int> {
-        use core::slice;
+        use core::mem;
 
         let data_ptr = unsafe { helpers::ringbuf_reserve(self.inner(), size as _, 0) };
         if data_ptr.is_null() {
             Err(-90)
         } else {
             Ok(RingBufferData {
-                inner: unsafe { slice::from_raw_parts_mut(data_ptr as *mut _, size) },
+                inner: //unsafe { slice::from_raw_parts_mut(data_ptr as *mut _, size) },
+                // it is really unsafe, the code become invalid if compiler change
+                // the metadata format
+                unsafe { mem::transmute((data_ptr, size)) },
             })
         }
     }

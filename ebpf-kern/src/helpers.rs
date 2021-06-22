@@ -34,6 +34,13 @@ pub unsafe fn map_delete_elem(map: *mut cty::c_void, key: *const cty::c_void) ->
 }
 
 #[inline(always)]
+pub unsafe fn ktime_get_ns() -> cty::uint64_t {
+    let f: unsafe extern "C" fn() -> cty::uint64_t = mem::transmute(5usize);
+
+    f()
+}
+
+#[inline(always)]
 pub unsafe fn get_current_pid_tgid() -> cty::uint64_t {
     let f: unsafe extern "C" fn() -> cty::uint64_t = mem::transmute(14usize);
 
@@ -63,6 +70,21 @@ pub unsafe fn get_stack(
     ) -> cty::c_long = mem::transmute(67usize);
 
     f(ctx, buf, size, flags)
+}
+
+#[inline(always)]
+pub unsafe fn probe_read_user(
+    dst: *mut cty::c_void,
+    size: cty::uint32_t,
+    unsafe_ptr: *const cty::c_void,
+) -> cty::c_long {
+    let f: unsafe extern "C" fn(
+        *mut cty::c_void,
+        cty::uint32_t,
+        *const cty::c_void,
+    ) -> cty::c_long = mem::transmute(112usize);
+
+    f(dst, size, unsafe_ptr)
 }
 
 #[inline(always)]
