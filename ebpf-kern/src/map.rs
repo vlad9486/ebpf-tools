@@ -177,4 +177,22 @@ impl<const K: usize, const V: usize> HashMapRef<K, V> {
             None => Ok(None),
         }
     }
+
+    #[inline(always)]
+    pub fn remove_unsafe<T>(&mut self, key: &[u8; K]) -> Result<Option<T>, i32>
+    where
+        T: Copy,
+    {
+        match self.get_unsafe(key) {
+            Some(v) => {
+                let c = unsafe { helpers::map_delete_elem(self.inner(), key.as_ptr() as _) };
+                if c >= 0 {
+                    Ok(Some(*v))
+                } else {
+                    Err(c as _)
+                }
+            },
+            None => Ok(None),
+        }
+    }
 }
