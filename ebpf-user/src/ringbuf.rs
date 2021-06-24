@@ -27,7 +27,7 @@ impl Default for RingBufferRegistry {
 
         RingBufferRegistry {
             inner: ptr::null_mut(),
-            callbacks: Vec::new(),
+            callbacks: Vec::with_capacity(256),
         }
     }
 }
