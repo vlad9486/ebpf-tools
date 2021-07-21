@@ -1,6 +1,6 @@
 [package]
 name = "ebpf-user"
-version = "0.1.5"
+version = "0.1.6"
 authors = ["Vladislav Melnik <vladislav.melnik@protonmail.com>"]
 edition = "2018"
 license = "MIT"
