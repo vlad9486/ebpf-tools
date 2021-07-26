@@ -128,6 +128,19 @@ impl<const K: usize, const V: usize> HashMapRef<K, V> {
     }
 
     #[inline(always)]
+    pub fn get_mut_unsafe<T>(&self, key: &[u8; K]) -> Option<&mut T> {
+        let key = key as *const [u8] as *const u8 as *const _;
+        unsafe {
+            let v = helpers::map_lookup_elem(self.inner(), key);
+            if v.is_null() {
+                None
+            } else {
+                Some(&mut *(v as *mut T))
+            }
+        }
+    }
+
+    #[inline(always)]
     pub fn insert(&mut self, key: [u8; K], value: [u8; V]) -> Result<(), i32> {
         let c = unsafe {
             helpers::map_update_elem(self.inner(), key.as_ptr() as _, value.as_ptr() as _, 0)

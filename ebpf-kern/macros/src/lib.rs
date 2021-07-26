@@ -189,7 +189,10 @@ pub fn derive_bpf_app(input: proc_macro::TokenStream) -> proc_macro::TokenStream
                     ))
                 }
             },
-            _ => Err(Error::new(segment.ident.span(), "unknown attribute")),
+            _ => Ok(KernelTokens {
+                decl: quote::quote! {},
+                new_field: quote::quote! {},
+            }),
         }
     }
 
