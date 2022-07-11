@@ -1,4 +1,5 @@
-use core::ptr;
+use core::{ptr, ffi::c_void};
+
 use super::helpers;
 
 #[allow(dead_code)]
@@ -33,7 +34,7 @@ impl<const V: usize> ArrayPerCpuRef<V> {
     }
 
     #[inline(always)]
-    fn inner(&self) -> *mut cty::c_void {
+    fn inner(&self) -> *mut c_void {
         self.inner as *mut _
     }
 
@@ -96,7 +97,7 @@ impl<const K: usize, const V: usize> HashMapRef<K, V> {
     }
 
     #[inline(always)]
-    fn inner(&self) -> *mut cty::c_void {
+    fn inner(&self) -> *mut c_void {
         self.inner as *mut _
     }
 

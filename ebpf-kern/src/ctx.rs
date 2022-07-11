@@ -1,13 +1,15 @@
+use core::ffi::c_void;
+
 use super::helpers;
 
 // TODO: cross-platform
 pub struct Context {
-    inner: *const cty::c_void,
+    inner: *const c_void,
 }
 
 impl Context {
     #[inline(always)]
-    pub unsafe fn cast(ctx: *const cty::c_void) -> Self {
+    pub unsafe fn cast(ctx: *const c_void) -> Self {
         Context { inner: ctx }
     }
 

@@ -1,6 +1,6 @@
 [package]
 name = "ebpf-user"
-version = "0.1.6"
+version = "0.2.0"
 authors = ["Vladislav Melnik <vladislav.melnik@protonmail.com>"]
 edition = "2018"
 license = "MIT"
@@ -8,9 +8,9 @@ description = "User space wrapper for libbpf"
 repository = "https://github.com/vlad9486/ebpf-tools"
 
 [dependencies]
-libbpf-sys = "0.3.0-1"
-cty = "0.2"
-ebpf-user-macros = { version = "0.1.4", path = "macros", optional = true }
+libbpf-sys = "0.8.1+v0.8.0"
+cty = "0.2.2"
+ebpf-user-macros = { version = "0.2.0", path = "macros", optional = true }
 
 [features]
 macros = ["ebpf-user-macros"]

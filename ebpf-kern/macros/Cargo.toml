@@ -1,6 +1,6 @@
 [package]
 name = "ebpf-kern-macros"
-version = "0.1.7"
+version = "0.2.0"
 authors = ["Vladislav Melnik <vladislav.melnik@protonmail.com>"]
 edition = "2018"
 license = "MIT"
@@ -11,6 +11,6 @@ repository = "https://github.com/vlad9486/ebpf-tools"
 proc-macro = true
 
 [dependencies]
-proc-macro2 = "1.0.26"
-syn = { version = "1.0.69", features = ["derive", "parsing"] }
-quote = "1.0.9"
+proc-macro2 = "1.0"
+syn = { version = "1.0", features = ["derive", "parsing"] }
+quote = "1.0"

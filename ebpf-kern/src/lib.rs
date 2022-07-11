@@ -1,10 +1,9 @@
 #![no_std]
 #![allow(clippy::missing_safety_doc)]
+#![feature(core_ffi_c)]
 
 #[cfg(feature = "macros")]
 pub use ebpf_kern_macros::*;
-
-pub use cty;
 
 pub mod helpers;
 

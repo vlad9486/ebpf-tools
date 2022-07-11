@@ -11,17 +11,20 @@ fn build_bpf() {
     let target_dir = format!("{}/bpf", target_dir);
 
     let args = &[
-        "+nightly-2020-12-31",
+        "+nightly-2022-07-01",
         "rustc",
         "--package=example-kprobe",
         "--bin=example-kern",
         "--features=kern",
         "--no-default-features",
+        "--target=bpfel-unknown-none",
+        "-Z",
+        "build-std=core",
+        "--release",
         "--",
-        "-Clinker-plugin-lto",
-        "-Clinker-flavor=wasm-ld",
-        "-Clinker=bpf-linker",
-        "-Clink-arg=--target=bpf",
+        "-Cdebuginfo=2",
+        "-Clink-arg=--disable-memory-builtins",
+        "-Clink-arg=--keep-btf",
     ];
     let output = Command::new("cargo")
         .env("CARGO_TARGET_DIR", &target_dir)
@@ -36,9 +39,9 @@ fn build_bpf() {
         .current_dir(&target_dir)
         .arg("-i")
         .arg("s/ty__/type/g")
-        .arg("debug/example-kern")
+        .arg("bpfel-unknown-none/release/example-kern")
         .output()
         .expect("failed to patch bpf object");
 
-    println!("cargo:rustc-env=BPF_CODE={}/debug/example-kern", target_dir);
+    println!("cargo:rustc-env=BPF_CODE={}/bpfel-unknown-none/release/example-kern", target_dir);
 }

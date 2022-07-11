@@ -1,4 +1,5 @@
 #![cfg_attr(feature = "kern", no_std, no_main, feature(lang_items))]
+#![feature(core_ffi_c)]
 
 #[cfg(feature = "kern")]
 use ebpf_kern as ebpf;

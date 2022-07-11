@@ -168,8 +168,8 @@ pub fn derive_bpf_app(input: proc_macro::TokenStream) -> proc_macro::TokenStream
                             #[no_mangle]
                             #[link_section = #l]
                             fn #name_ident(
-                                ctx: *const ebpf_kern::cty::c_void,
-                            ) -> ebpf_kern::cty::c_int {
+                                ctx: *const core::ffi::c_void,
+                            ) -> core::ffi::c_int {
                                 let mut app = unsafe { app_instance() };
                                 let ctx = unsafe { ebpf_kern::Context::cast(ctx) };
                                 match app.#name_ident(ctx) {

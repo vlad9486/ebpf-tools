@@ -87,9 +87,16 @@ where
             object_name: ptr::null(),
             relaxed_maps: false,
             relaxed_core_relocs: false,
+            __bindgen_padding_0: [0; 6],
             pin_root_path: ptr::null(),
             attach_prog_fd: 0,
+            __bindgen_padding_1: [0; 4],
             kconfig: ptr::null(),
+            btf_custom_path: ptr::null(),
+            kernel_log_buf: ptr::null_mut(),
+            kernel_log_size: 0,
+            kernel_log_level: 0,
+            __bindgen_padding_2: [0; 4],
         };
 
         let map_l = Layout::array::<libbpf_sys::bpf_map_skeleton>(App::MAP_CNT).unwrap();

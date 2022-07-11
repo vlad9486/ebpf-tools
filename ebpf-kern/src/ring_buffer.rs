@@ -1,4 +1,5 @@
-use core::ptr;
+use core::{ptr, ffi::{c_void, c_int}};
+
 use super::helpers;
 
 #[allow(dead_code)]
@@ -46,7 +47,7 @@ impl RingBufferRef {
     }
 
     #[inline(always)]
-    fn inner(&mut self) -> *mut cty::c_void {
+    fn inner(&mut self) -> *mut c_void {
         self.inner as *mut _
     }
 
@@ -63,7 +64,7 @@ impl RingBufferRef {
     }
 
     #[inline(always)]
-    pub fn reserve(&mut self, size: usize) -> Result<RingBufferData, cty::c_int> {
+    pub fn reserve(&mut self, size: usize) -> Result<RingBufferData, c_int> {
         use core::mem;
 
         let data_ptr = unsafe { helpers::ringbuf_reserve(self.inner(), size as _, 0) };
