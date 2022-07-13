@@ -60,6 +60,11 @@ where
     pub app: Box<App>,
 }
 
+pub struct SkeletonEmpty {
+    inner: libbpf_sys::bpf_object_skeleton,
+    _obj: Box<*mut libbpf_sys::bpf_object>,
+}
+
 pub trait BpfApp {
     const MAP_CNT: usize;
     const PROG_CNT: usize;
@@ -152,21 +157,24 @@ where
         }
     }
 
-    pub fn attach(&mut self) -> Result<(), i32> {
+    pub fn attach(mut self) -> Result<(SkeletonEmpty, Box<App>), i32> {
         let c = unsafe { libbpf_sys::bpf_object__attach_skeleton(&mut self.inner) };
 
         if c == 0 {
-            Ok(())
+            Ok((
+                SkeletonEmpty {
+                    inner: self.inner,
+                    _obj: self.obj,
+                },
+                self.app,
+            ))
         } else {
             Err(c)
         }
     }
 }
 
-impl<App> Drop for Skeleton<App>
-where
-    App: BpfApp,
-{
+impl Drop for SkeletonEmpty {
     fn drop(&mut self) {
         let s = Box::new(self.inner);
         unsafe { libbpf_sys::bpf_object__destroy_skeleton(Box::leak(s)) }

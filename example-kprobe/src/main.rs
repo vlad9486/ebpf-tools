@@ -37,10 +37,10 @@ fn main() -> Result<(), i32> {
 
     let mut skeleton = Skeleton::<App>::open("example-kprobe\0", CODE)?;
     skeleton.load()?;
-    skeleton.attach()?;
+    let (_skeleton, app) = skeleton.attach()?;
 
     let mut rb = RingBufferRegistry::default();
-    rb.add(&skeleton.app.event_queue, |s| {
+    rb.add(&app.event_queue, |s| {
         println!("{:x}", u64::from_ne_bytes(TryFrom::try_from(s).unwrap()));
     })?;
 
