@@ -105,9 +105,7 @@ impl<const K: usize, const V: usize> HashMapRef<K, V> {
     pub fn insert_unsafe<T>(&mut self, key: [u8; K], value: T) -> Result<(), i32> {
         let value = &value as *const T as _;
         let key = &key as *const [u8] as *const u8 as *const _;
-        let c = unsafe {
-            helpers::map_update_elem(self.inner(), key, value, 0)
-        };
+        let c = unsafe { helpers::map_update_elem(self.inner(), key, value, 0) };
         if c >= 0 {
             Ok(())
         } else {

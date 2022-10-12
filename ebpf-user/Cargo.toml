@@ -8,7 +8,7 @@ description = "User space wrapper for libbpf"
 repository = "https://github.com/vlad9486/ebpf-tools"
 
 [dependencies]
-libbpf-sys = "0.8.1+v0.8.0"
+libbpf-sys = "1.0.1"
 cty = "0.2.2"
 ebpf-user-macros = { version = "0.2.0", path = "macros", optional = true }
 

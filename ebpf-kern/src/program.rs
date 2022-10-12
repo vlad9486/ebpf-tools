@@ -1,4 +1,7 @@
-use core::{marker::PhantomData, ffi::{c_void, c_int}};
+use core::{
+    marker::PhantomData,
+    ffi::{c_void, c_int},
+};
 
 pub struct ProgRef {
     _private: PhantomData<fn(ctx: *const c_void) -> c_int>,

@@ -1,4 +1,7 @@
-use core::{ptr, ffi::{c_void, c_int}};
+use core::{
+    ptr,
+    ffi::{c_void, c_int},
+};
 
 use super::helpers;
 

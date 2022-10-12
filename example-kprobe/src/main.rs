@@ -1,5 +1,4 @@
 #![cfg_attr(feature = "kern", no_std, no_main, feature(lang_items))]
-#![feature(core_ffi_c)]
 
 #[cfg(feature = "kern")]
 use ebpf_kern as ebpf;
@@ -30,7 +29,7 @@ impl App {
 
 #[cfg(feature = "user")]
 fn main() -> Result<(), i32> {
-    use std::{time::Duration, convert::TryFrom};
+    use std::{time::Duration, convert::TryFrom, mem::ManuallyDrop};
     use ebpf::{Skeleton, RingBufferRegistry};
 
     static CODE: &[u8] = include_bytes!(concat!("../", env!("BPF_CODE")));
@@ -40,9 +39,13 @@ fn main() -> Result<(), i32> {
     let (_skeleton, app) = skeleton.attach()?;
 
     let mut rb = RingBufferRegistry::default();
-    rb.add(&app.event_queue, |s| {
-        println!("{:x}", u64::from_ne_bytes(TryFrom::try_from(s).unwrap()));
-    })?;
+    let mut handler = |s: ManuallyDrop<Box<[u8]>>| {
+        println!(
+            "{:x}",
+            u64::from_ne_bytes(TryFrom::try_from(&s[..]).unwrap())
+        );
+    };
+    rb.add(&app.event_queue, &mut handler)?;
 
     loop {
         match rb.poll(Duration::from_millis(100)) {

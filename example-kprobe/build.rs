@@ -11,7 +11,7 @@ fn build_bpf() {
     let target_dir = format!("{}/bpf", target_dir);
 
     let args = &[
-        "+nightly-2022-07-01",
+        "+nightly-2022-10-10",
         "rustc",
         "--package=example-kprobe",
         "--bin=example-kern",
@@ -43,5 +43,8 @@ fn build_bpf() {
         .output()
         .expect("failed to patch bpf object");
 
-    println!("cargo:rustc-env=BPF_CODE={}/bpfel-unknown-none/release/example-kern", target_dir);
+    println!(
+        "cargo:rustc-env=BPF_CODE={}/bpfel-unknown-none/release/example-kern",
+        target_dir
+    );
 }

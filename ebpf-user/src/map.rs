@@ -55,9 +55,7 @@ impl<const K: usize, const V: usize> HashMapRef<K, V> {
     }
 
     pub fn remove(&self, key: &[u8; K]) -> Result<(), i32> {
-        let c = unsafe {
-            libbpf_sys::bpf_map_delete_elem(self.0.fd(), key.as_ptr() as _)
-        };
+        let c = unsafe { libbpf_sys::bpf_map_delete_elem(self.0.fd(), key.as_ptr() as _) };
         if c >= 0 {
             Ok(())
         } else {

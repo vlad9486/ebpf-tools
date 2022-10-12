@@ -1,4 +1,4 @@
-use std::time::Duration;
+use std::{time::Duration, mem::ManuallyDrop};
 use super::{skeleton::MapRef, kind};
 
 pub struct RingBufferRef(MapRef);
@@ -18,7 +18,6 @@ impl kind::AppItem for RingBufferRef {
 
 pub struct RingBufferRegistry {
     inner: *mut libbpf_sys::ring_buffer,
-    callbacks: Vec<Box<dyn FnMut(&[u8])>>,
 }
 
 impl Default for RingBufferRegistry {
@@ -27,7 +26,6 @@ impl Default for RingBufferRegistry {
 
         RingBufferRegistry {
             inner: ptr::null_mut(),
-            callbacks: Vec::with_capacity(256),
         }
     }
 }
@@ -41,39 +39,39 @@ impl Drop for RingBufferRegistry {
 }
 
 impl RingBufferRegistry {
-    unsafe extern "C" fn cb(ctx: *mut cty::c_void, data: *mut cty::c_void, size: u64) -> i32 {
+    unsafe extern "C" fn cb<F>(ctx: *mut cty::c_void, data: *mut cty::c_void, size: u64) -> i32
+    where
+        F: FnMut(ManuallyDrop<Box<[u8]>>),
+    {
         use std::slice;
 
-        let ctx = ctx as *mut Box<dyn FnMut(&[u8]) + 'static>;
-        let s = slice::from_raw_parts(data as *mut u8 as *const u8, size as _);
-        (*ctx)(s);
+        let s = slice::from_raw_parts_mut(data as *mut u8, size as _);
+        (*(ctx as *mut F))(ManuallyDrop::new(Box::from_raw(s as *mut [u8])));
         0
     }
 
-    pub fn add<F>(&mut self, rb: &RingBufferRef, cb: F) -> Result<(), i32>
+    pub fn add<F>(&mut self, rb: &RingBufferRef, cb: &mut F) -> Result<(), i32>
     where
-        F: for<'r> FnMut(&'r [u8]) + 'static,
+        F: FnMut(ManuallyDrop<Box<[u8]>>),
     {
         self.add_fd(rb.0.fd(), cb)
     }
 
-    pub fn add_fd<F>(&mut self, map_fd: i32, cb: F) -> Result<(), i32>
+    pub fn add_fd<F>(&mut self, map_fd: i32, cb: &mut F) -> Result<(), i32>
     where
-        F: for<'r> FnMut(&'r [u8]) + 'static,
+        F: FnMut(ManuallyDrop<Box<[u8]>>),
     {
         use std::ptr;
 
-        let cb: Box<dyn FnMut(&[u8]) + 'static> = Box::new(cb);
-        self.callbacks.push(cb);
-        let ctx = self.callbacks.last_mut().unwrap() as *mut _;
+        let ctx = cb as *mut F as *mut _;
         if self.inner.is_null() {
             self.inner = unsafe {
-                libbpf_sys::ring_buffer__new(map_fd, Some(Self::cb), ctx as _, ptr::null_mut())
+                libbpf_sys::ring_buffer__new(map_fd, Some(Self::cb::<F>), ctx, ptr::null_mut())
             };
             Ok(())
         } else {
             let c = unsafe {
-                libbpf_sys::ring_buffer__add(self.inner, map_fd, Some(Self::cb), ctx as _)
+                libbpf_sys::ring_buffer__add(self.inner, map_fd, Some(Self::cb::<F>), ctx)
             };
             if c != 0 {
                 Err(c)
