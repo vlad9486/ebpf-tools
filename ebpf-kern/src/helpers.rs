@@ -43,6 +43,13 @@ pub unsafe fn ktime_get_ns() -> uint64_t {
 }
 
 #[inline(always)]
+pub unsafe fn ktime_get_boot_ns() -> uint64_t {
+    let f: unsafe extern "C" fn() -> uint64_t = mem::transmute(125usize);
+
+    f()
+}
+
+#[inline(always)]
 pub unsafe fn get_current_pid_tgid() -> uint64_t {
     let f: unsafe extern "C" fn() -> uint64_t = mem::transmute(14usize);
 
