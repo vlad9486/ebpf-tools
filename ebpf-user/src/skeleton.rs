@@ -140,6 +140,18 @@ where
         }
     }
 
+    pub fn attach_xdp(&mut self, prog_name: &str, if_index: i32) -> Result<(), i32> {
+        for index in 0..App::PROG_CNT {
+            let xdp = self.app.as_mut_prog(index).unwrap();
+            if xdp.name.starts_with(prog_name) {
+                unsafe { libbpf_sys::bpf_program__attach_xdp(xdp.prog, dbg!(if_index as _)) };
+                return Ok(());
+            }
+        }
+
+        Err(1234) // no such program
+    }
+
     pub fn attach(mut self) -> Result<(SkeletonEmpty, Box<App>), i32> {
         let c = unsafe { libbpf_sys::bpf_object__attach_skeleton(&mut self.inner) };
 

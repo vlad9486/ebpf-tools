@@ -164,17 +164,34 @@ pub fn derive_bpf_app(input: proc_macro::TokenStream) -> proc_macro::TokenStream
             "prog" => {
                 if let Lit::Str(l) = attribute.parse_args()? {
                     Ok(KernelTokens {
-                        decl: quote::quote! {
-                            #[no_mangle]
-                            #[link_section = #l]
-                            fn #name_ident(
-                                ctx: *const core::ffi::c_void,
-                            ) -> core::ffi::c_int {
-                                let mut app = unsafe { app_instance() };
-                                let ctx = unsafe { ebpf_kern::Context::cast(ctx) };
-                                match app.#name_ident(ctx) {
-                                    Ok(()) => 0,
-                                    Err(c) => c,
+                        decl: if l.value() == "xdp" {
+                            quote::quote! {
+                                #[no_mangle]
+                                #[link_section = #l]
+                                fn #name_ident(
+                                    ctx: *const core::ffi::c_void,
+                                ) -> core::ffi::c_int {
+                                    let mut app = unsafe { app_instance() };
+                                    let ctx = unsafe { ebpf_kern::xdp::Context::cast(ctx) };
+                                    match app.#name_ident(ctx) {
+                                        Ok(v) => v as _,
+                                        Err(c) => ebpf_kern::xdp::Action::Aborted as _,
+                                    }
+                                }
+                            }
+                        } else {
+                            quote::quote! {
+                                #[no_mangle]
+                                #[link_section = #l]
+                                fn #name_ident(
+                                    ctx: *const core::ffi::c_void,
+                                ) -> core::ffi::c_int {
+                                    let mut app = unsafe { app_instance() };
+                                    let ctx = unsafe { ebpf_kern::Context::cast(ctx) };
+                                    match app.#name_ident(ctx) {
+                                        Ok(()) => 0,
+                                        Err(c) => c,
+                                    }
                                 }
                             }
                         },
