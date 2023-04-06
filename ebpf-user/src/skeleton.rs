@@ -1,6 +1,7 @@
 use std::ptr;
 use super::kind;
 
+#[derive(Clone, Copy)]
 pub struct MapRef {
     name: &'static str,
     inner: *mut libbpf_sys::bpf_map,

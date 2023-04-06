@@ -15,6 +15,7 @@ impl<const V: usize> kind::AppItem for ArrayPerCpuRef<V> {
     }
 }
 
+#[derive(Clone, Copy)]
 pub struct HashMapRef<const K: usize, const V: usize>(MapRef);
 
 impl<const K: usize, const V: usize> kind::AppItem for HashMapRef<K, V> {
