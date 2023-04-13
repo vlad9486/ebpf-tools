@@ -145,8 +145,14 @@ where
         for index in 0..App::PROG_CNT {
             let xdp = self.app.as_mut_prog(index).unwrap();
             if xdp.name.starts_with(prog_name) {
-                unsafe { libbpf_sys::bpf_program__attach_xdp(xdp.prog, dbg!(if_index as _)) };
-                return Ok(());
+                errno::set_errno(errno::Errno(0));
+                unsafe { libbpf_sys::bpf_program__attach_xdp(xdp.prog, if_index as _) };
+                let error = errno::errno().0;
+                if error == 0 {
+                    return Ok(());
+                } else {
+                    return Err(error);
+                }
             }
         }
 
