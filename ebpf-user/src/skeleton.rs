@@ -141,12 +141,14 @@ where
         }
     }
 
-    pub fn attach_xdp(&mut self, prog_name: &str, if_index: i32) -> Result<(), i32> {
+    // TODO: create enum for flags
+    pub fn attach_xdp(&mut self, prog_name: &str, if_index: i32, flags: u32) -> Result<(), i32> {
         for index in 0..App::PROG_CNT {
             let xdp = self.app.as_mut_prog(index).unwrap();
             if xdp.name.starts_with(prog_name) {
                 errno::set_errno(errno::Errno(0));
-                unsafe { libbpf_sys::bpf_program__attach_xdp(xdp.prog, if_index as _) };
+                let fd = unsafe { libbpf_sys::bpf_program__fd(xdp.prog) };
+                unsafe { libbpf_sys::bpf_xdp_attach(if_index as _, fd, flags, ptr::null()) };
                 let error = errno::errno().0;
                 if error == 0 {
                     return Ok(());
