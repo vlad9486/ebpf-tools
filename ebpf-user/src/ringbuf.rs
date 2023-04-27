@@ -14,6 +14,10 @@ impl kind::AppItem for RingBufferRef {
     fn kind_mut(&mut self) -> kind::AppItemKindMut<'_> {
         kind::AppItemKindMut::Map(&mut self.0)
     }
+
+    fn kind(&self) -> kind::AppItemKind<'_> {
+        kind::AppItemKind::Map(&self.0)
+    }
 }
 
 pub struct RingBufferRegistry {

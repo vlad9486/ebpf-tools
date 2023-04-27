@@ -21,6 +21,10 @@ impl kind::AppItem for MapRef {
     fn kind_mut(&mut self) -> kind::AppItemKindMut<'_> {
         kind::AppItemKindMut::Map(self)
     }
+
+    fn kind(&self) -> kind::AppItemKind<'_> {
+        kind::AppItemKind::Map(self)
+    }
 }
 
 impl MapRef {
@@ -49,6 +53,10 @@ impl kind::AppItem for ProgRef {
 
     fn kind_mut(&mut self) -> kind::AppItemKindMut<'_> {
         kind::AppItemKindMut::Prog(self)
+    }
+
+    fn kind(&self) -> kind::AppItemKind<'_> {
+        kind::AppItemKind::Prog(self)
     }
 }
 

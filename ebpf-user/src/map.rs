@@ -13,6 +13,10 @@ impl<const V: usize> kind::AppItem for ArrayPerCpuRef<V> {
     fn kind_mut(&mut self) -> kind::AppItemKindMut<'_> {
         kind::AppItemKindMut::Map(&mut self.0)
     }
+
+    fn kind(&self) -> kind::AppItemKind<'_> {
+        kind::AppItemKind::Map(&self.0)
+    }
 }
 
 #[derive(Clone, Copy)]
@@ -28,6 +32,10 @@ impl<const K: usize, const V: usize> kind::AppItem for HashMapRef<K, V> {
 
     fn kind_mut(&mut self) -> kind::AppItemKindMut<'_> {
         kind::AppItemKindMut::Map(&mut self.0)
+    }
+
+    fn kind(&self) -> kind::AppItemKind<'_> {
+        kind::AppItemKind::Map(&self.0)
     }
 }
 
